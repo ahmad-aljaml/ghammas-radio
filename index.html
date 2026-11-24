@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إذاعة غماس بلدي | Ghammas Baladi Radio</title>
+<meta name="description" content="الإذاعة الداخلية الموحّدة لفروع مطاعم غماس بلدي - CDR Group (نموذج تقني)">
+<meta name="theme-color" content="#2b1d14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1e140e; --bg2:#2b1d14; --card:#33241a; --line:#4a3527;
+    --cream:#f5e9d7; --muted:#c7b39b; --terra:#d9693b; --olive:#8a9a4b;
+    --gold:#e5b45a; --ok:#7fbf6a; --warn:#e5b45a; --bad:#e0644f;
+    --radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Cairo",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+    color:var(--cream);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(217,105,59,.22), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(138,154,75,.18), transparent 60%),
+      var(--bg);
+    display:flex;flex-direction:column;align-items:center;
+    padding:24px 16px 32px;min-height:100vh;
+  }
+  .wrap{width:100%;max-width:560px;display:flex;flex-direction:column;gap:16px}
+
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:52px;height:52px;border-radius:16px;flex:none;
+    background:linear-gradient(140deg,var(--terra),#a8461f);
+    display:grid;place-items:center;font-weight:800;font-size:24px;color:#fff;
+    box-shadow:0 8px 24px rgba(217,105,59,.35);
+  }
+  .brand h1{font-size:20px;font-weight:800;line-height:1.2}
+  .brand small{display:block;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.3px}
+  .status{
+    display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    background:var(--card);border:1px solid var(--line);padding:6px 12px;border-radius:999px;white-space:nowrap
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .status.live .dot{background:var(--bad);animation:pulse 1.4s infinite}
+  .status.ok .dot{background:var(--ok)}
+  .status.warn .dot{background:var(--warn);animation:pulse 1s infinite}
+  .status.bad .dot{background:var(--bad)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,100,79,.6)}70%{box-shadow:0 0 0 8px rgba(224,100,79,0)}100%{box-shadow:0 0 0 0 rgba(224,100,79,0)}}
+
+  .branch{
+    display:none;text-align:center;font-weight:700;font-size:14px;color:var(--gold);
+    background:rgba(229,180,90,.08);border:1px dashed rgba(229,180,90,.4);padding:8px;border-radius:12px
+  }
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+
+  .player{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+  .program{
+    font-size:13px;font-weight:700;padding:6px 14px;border-radius:999px;
+    background:rgba(138,154,75,.15);color:#cfdb93;border:1px solid rgba(138,154,75,.35)
+  }
+  .disc{
+    width:180px;height:180px;border-radius:50%;position:relative;
+    background:
+      radial-gradient(circle at 50% 50%, var(--terra) 0 18%, #1a110c 18.5% 21%, transparent 21.5%),
+      repeating-radial-gradient(circle at 50% 50%, #241811 0 3px, #2d1f16 3px 6px);
+    box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 0 0 6px #1a110c;
+  }
+  .disc::after{content:"";position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0 70%, rgba(255,255,255,.07) 80%, transparent 90%)}
+  .playing .disc{animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .title{font-size:22px;font-weight:800;line-height:1.35;min-height:30px}
+  .artist{color:var(--muted);font-size:15px;font-weight:600;margin-top:2px}
+  .album{color:#9c8670;font-size:12px;margin-top:2px;direction:ltr}
+
+  .progress{width:100%}
+  .bar{height:6px;background:#1a110c;border-radius:99px;overflow:hidden;direction:ltr}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--terra));border-radius:99px;transition:width .9s linear}
+  .times{display:flex;justify-content:space-between;font-size:11px;color:#9c8670;margin-top:6px;direction:ltr}
+
+  .controls{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
+  .btn-play{
+    width:76px;height:76px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(140deg,var(--terra),#b84c22);color:#fff;
+    display:grid;place-items:center;box-shadow:0 12px 30px rgba(217,105,59,.45);transition:transform .15s
+  }
+  .btn-play:active{transform:scale(.94)}
+  .btn-play svg{width:32px;height:32px}
+  .btn{
+    border:1px solid var(--line);background:#271b13;color:var(--cream);cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;border-radius:12px;
+    display:flex;align-items:center;gap:6px
+  }
+  .btn:hover{border-color:var(--gold)}
+  .vol{display:flex;align-items:center;gap:8px;width:100%;max-width:300px;color:var(--muted)}
+  .vol input{flex:1;accent-color:var(--terra)}
+
+  .eq{display:flex;gap:3px;height:18px;align-items:flex-end;opacity:0;transition:opacity .3s}
+  .playing .eq{opacity:1}
+  .eq span{width:4px;background:var(--gold);border-radius:2px;animation:eq 1s infinite ease-in-out}
+  .eq span:nth-child(2){animation-delay:.2s}.eq span:nth-child(3){animation-delay:.4s}.eq span:nth-child(4){animation-delay:.1s}
+  @keyframes eq{0%,100%{height:4px}50%{height:18px}}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .mini h3{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .mini .v{font-size:15px;font-weight:700;line-height:1.4}
+  .mini .s{font-size:12px;color:#9c8670}
+  .big{font-size:30px;font-weight:800;color:var(--gold)}
+
+  .schedule h3{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:12px}
+  .timeline{position:relative;height:38px;border-radius:10px;overflow:hidden;background:#1a110c;direction:ltr;display:flex}
+  .seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1e140e;white-space:nowrap;overflow:hidden}
+  .seg.night{background:#3a2a1e;color:#9c8670}
+  .seg.morning{background:#cfdb93}
+  .seg.evening{background:var(--gold)}
+  .now-mark{position:absolute;top:0;bottom:0;width:3px;background:#fff;box-shadow:0 0 10px #fff;border-radius:2px}
+  .hours{display:flex;justify-content:space-between;font-size:10px;color:#9c8670;margin-top:6px;direction:ltr}
+
+  .history h3{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .history ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .history li{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:8px 10px;background:#241811;border-radius:10px}
+  .history li span:last-child{color:#9c8670;direction:ltr;white-space:nowrap}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,13,9,.92);backdrop-filter:blur(6px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:10;text-align:center;padding:24px
+  }
+  .overlay.hidden{display:none}
+  .overlay p{color:var(--muted);max-width:340px;font-size:14px}
+
+  footer{text-align:center;color:#8a7561;font-size:11px;line-height:1.8;margin-top:8px}
+  footer b{color:var(--muted)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#33241a;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  @media (max-width:420px){.grid{grid-template-columns:1fr}.disc{width:150px;height:150px}}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="logo" style="width:72px;height:72px;font-size:32px">غ</div>
+  <h2 style="font-size:22px">إذاعة غماس بلدي</h2>
+  <p>المتصفحات بتطلب ضغطة وحدة قبل تشغيل الصوت. بعدها الإذاعة بتشتغل وبتعيد الاتصال تلقائياً لو انقطع النت.</p>
+  <button class="btn-play" id="startBtn" aria-label="تشغيل">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">غ</div>
+      <div>
+        <h1>إذاعة غماس بلدي</h1>
+        <small>GHAMMAS BALADI RADIO · CDR GROUP</small>
+      </div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">جارِ الاتصال…</span></div>
+  </header>
+
+  <div class="branch" id="branch"></div>
+
+  <section class="card player" id="playerCard">
+    <span class="program" id="program">—</span>
+    <div class="disc" aria-hidden="true"></div>
+    <div>
+      <div class="title" id="title">—</div>
+      <div class="artist" id="artist"></div>
+      <div class="album" id="album"></div>
+    </div>
+    <div class="progress">
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="syncBtn" title="ارجع للحظة البث المباشر">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        مزامنة
+      </button>
+      <button class="btn-play" id="playBtn" aria-label="تشغيل/إيقاف">
+        <svg id="icoPlay" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </div>
+    <label class="vol">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3z"/></svg>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="1" aria-label="مستوى الصوت">
+    </label>
+  </section>
+
+  <section class="grid">
+    <div class="card mini">
+      <h3>التالي</h3>
+      <div class="v" id="nextTitle">—</div>
+      <div class="s" id="nextArtist"></div>
+    </div>
+    <div class="card mini">
+      <h3>الفروع المتصلة الآن</h3>
+      <div class="big" id="listeners">0</div>
+      <div class="s">جهاز يستمع للبث الموحّد</div>
+    </div>
+  </section>
+
+  <section class="card schedule">
+    <h3>جدول البث اليومي (بتوقيت عمّان)</h3>
+    <div class="timeline" id="timeline">
+      <div class="seg night"   style="width:33.333%">ليلي</div>
+      <div class="seg morning" style="width:37.5%">☕ صباحي · Cafe</div>
+      <div class="seg evening" style="width:29.167%">🎷 مسائي · Jazz</div>
+      <div class="now-mark" id="nowMark"></div>
+    </div>
+    <div class="hours"><span>12 AM</span><span>8 AM</span><span>12 PM</span><span>5 PM</span><span>12 AM</span></div>
+  </section>
+
+  <section class="card history">
+    <h3>آخر ما تم بثّه</h3>
+    <ul id="history"><li><span>—</span><span></span></li></ul>
+  </section>
+
+  <footer>
+    نظام بث مركزي موحّد لكل الفروع · <b>AzuraCast</b> على <b>AWS</b><br>
+    نموذج تقني (Prototype) من إعداد <b>أحمد الجمل</b> · الموسيقى مرخّصة من Pixabay لأغراض التجربة
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<audio id="audio" preload="none"></audio>
+
+<script>
+(() => {
+  // ===== الإعدادات =====
+  const BASE      = "https://ghammas-radio.duckdns.org";
+  const STATION   = "ghammas";
+  const STREAM    = `${BASE}/listen/${STATION}/radio.mp3`;
+  const API_FAST  = `${BASE}/api/nowplaying_static/${STATION}.json`; // نسخة مخزّنة وخفيفة
+  const API_FULL  = `${BASE}/api/nowplaying/${STATION}`;             // احتياط
+  const POLL_MS   = 10000;   // تحديث معلومات الأغنية كل 10 ثواني
+  const STALL_MS  = 8000;    // إذا الصوت وقف 8 ثواني والمفروض شغال => إعادة اتصال
+
+  const $ = id => document.getElementById(id);
+  const audio = $("audio");
+  let wantPlaying = false, retry = 0, lastTime = 0, lastAdvance = Date.now();
+  let np = null, npFetchedAt = 0, wakeLock = null;
+
+  // ===== وضع الفرع: ?branch=عبدون =====
+  const params = new URLSearchParams(location.search);
+  const branch = params.get("branch");
+  if (branch) { $("branch").style.display = "block"; $("branch").textContent = "📍 فرع: " + branch; document.title = "غماس بلدي · " + branch; }
+
+  // ===== أدوات =====
+  const fmt = s => { s = Math.max(0, Math.floor(s||0)); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); };
+  const toast = msg => { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("show"), 2500); };
+  function setStatus(kind, text){ const s=$("status"); s.className="status "+kind; $("statusText").textContent=text; }
+  function programLabel(name){
+    if (!name) return "—";
+    if (/morning/i.test(name)) return "☕ الفترة الصباحية · Morning Cafe";
+    if (/evening/i.test(name)) return "🎷 الفترة المسائية · Evening Jazz";
+    return "🎶 البث العام · " + name;
+  }
+
+  // ===== التشغيل =====
+  function connect(){
+    // رابط جديد كل مرة => يتجاوز الكاش ويرجع للحظة البث المباشر (Live Edge)
+    audio.src = STREAM + "?t=" + Date.now();
+    audio.load();
+    const p = audio.play();
+    if (p && p.catch) p.catch(() => { $("overlay").classList.remove("hidden"); });
+  }
+  function play(){ wantPlaying = true; retry = 0; connect(); requestWakeLock(); }
+  function stop(){ wantPlaying = false; audio.pause(); audio.removeAttribute("src"); audio.load(); updateUI(); setStatus("ok","متوقف"); }
+
+  function reconnect(reason){
+    if (!wantPlaying) return;
+    retry++;
+    const wait = Math.min(15000, 1000 * Math.pow(2, retry-1)); // 1،2،4،8،15 ثانية (Exponential Backoff)
+    setStatus("warn", "إعادة الاتصال… (" + retry + ")");
+    console.log("[reconnect]", reason, "in", wait, "ms");
+    clearTimeout(reconnect._t);
+    reconnect._t = setTimeout(connect, wait);
+  }
+
+  audio.addEventListener("playing", () => { retry = 0; lastAdvance = Date.now(); setStatus("live","مباشر"); updateUI(); });
+  audio.addEventListener("pause",   updateUI);
+  audio.addEventListener("error",   () => reconnect("error"));
+  audio.addEventListener("ended",   () => reconnect("ended"));
+  audio.addEventListener("stalled", () => reconnect("stalled"));
+  window.addEventListener("online",  () => { toast("رجع الاتصال بالإنترنت"); if (wantPlaying) { retry = 0; connect(); } });
+  window.addEventListener("offline", () => setStatus("bad","لا يوجد إنترنت"));
+
+  // حارس (Watchdog): إذا المفروض شغال بس الوقت ما عم يتقدم => في تعليق
+  setInterval(() => {
+    if (!wantPlaying) return;
+    if (audio.currentTime !== lastTime) { lastTime = audio.currentTime; lastAdvance = Date.now(); return; }
+    if (Date.now() - lastAdvance > STALL_MS) { lastAdvance = Date.now(); reconnect("watchdog"); }
+  }, 2000);
+
+  function updateUI(){
+    const playing = wantPlaying && !audio.paused;
+    $("playerCard").classList.toggle("playing", playing);
+    $("icoPlay").style.display  = playing ? "none" : "block";
+    $("icoPause").style.display = playing ? "block" : "none";
+  }
+
+  $("playBtn").onclick  = () => (wantPlaying && !audio.paused) ? stop() : play();
+  $("startBtn").onclick = () => { $("overlay").classList.add("hidden"); play(); };
+  $("syncBtn").onclick  = () => { if (!wantPlaying) return play(); retry = 0; connect(); toast("تمت المزامنة مع البث المباشر ✓"); };
+  $("volume").oninput   = e => { audio.volume = e.target.value; try{ localStorage.setItem("vol", e.target.value);}catch(_){} };
+  try { const v = localStorage.getItem("vol"); if (v !== null) { audio.volume = v; $("volume").value = v; } } catch(_){}
+
+  // منع الشاشة من النوم بجهاز الفرع
+  async function requestWakeLock(){
+    try { if ("wakeLock" in navigator) { wakeLock = await navigator.wakeLock.request("screen"); } } catch(_){}
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && wantPlaying) requestWakeLock(); });
+
+  // ===== معلومات البث من الـ API =====
+  async function fetchNP(){
+    for (const url of [API_FAST, API_FULL]) {
+      try {
+        const r = await fetch(url + (url.includes("?") ? "&" : "?") + "_=" + Date.now(), { cache: "no-store" });
+        if (r.ok) { np = await r.json(); npFetchedAt = Date.now(); render(); return; }
+      } catch(_) {}
+    }
+    if (!wantPlaying) setStatus("bad","تعذّر الوصول للسيرفر");
+  }
+
+  function render(){
+    if (!np) return;
+    const cur = np.now_playing || {}, song = cur.song || {};
+    $("title").textContent  = song.title || song.text || "—";
+    $("artist").textContent = song.artist || "";
+    $("album").textContent  = song.album || "";
+    $("program").textContent = programLabel(cur.playlist);
+
+    const nx = (np.playing_next && np.playing_next.song) || {};
+    $("nextTitle").textContent  = nx.title || nx.text || "—";
+    $("nextArtist").textContent = nx.artist || "";
+
+    $("listeners").textContent = (np.listeners && (np.listeners.current ?? np.listeners.total)) ?? 0;
+
+    const ul = $("history"); ul.innerHTML = "";
+    (np.song_history || []).slice(0, 4).forEach(h => {
+      const li = document.createElement("li");
+      const t = new Date((h.played_at||0) * 1000).toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit", timeZone:"Asia/Amman"});
+      li.innerHTML = `<span></span><span>${t}</span>`;
+      li.firstChild.textContent = (h.song && (h.song.title || h.song.text)) || "—";
+      ul.appendChild(li);
+    });
+
+    if (!wantPlaying) setStatus(np.is_online ? "ok" : "bad", np.is_online ? "البث متاح" : "البث متوقف");
+    document.title = (song.title ? song.title + " · " : "") + "إذاعة غماس بلدي" + (branch ? " · " + branch : "");
+    tick();
+  }
+
+  // شريط التقدم بيتحرك كل ثانية محلياً بين التحديثات
+  function tick(){
+    if (!np || !np.now_playing) return;
+    const cur = np.now_playing;
+    const elapsed = Math.min(cur.duration || 0, (cur.elapsed || 0) + (Date.now() - npFetchedAt) / 1000);
+    $("elapsed").textContent  = fmt(elapsed);
+    $("duration").textContent = fmt(cur.duration);
+    $("barFill").style.width  = cur.duration ? (elapsed / cur.duration * 100) + "%" : "0%";
+  }
+
+  // مؤشر الوقت الحالي على جدول اليوم (بتوقيت عمّان)
+  function placeNow(){
+    const parts = new Intl.DateTimeFormat("en-GB", {hour:"numeric", minute:"numeric", hour12:false, timeZone:"Asia/Amman"}).formatToParts(new Date());
+    const h = +parts.find(p=>p.type==="hour").value % 24, m = +parts.find(p=>p.type==="minute").value;
+    $("nowMark").style.left = ((h*60+m) / 1440 * 100) + "%";
+  }
+
+  setInterval(tick, 1000);
+  setInterval(fetchNP, POLL_MS);
+  setInterval(placeNow, 30000);
+  fetchNP(); placeNow(); updateUI();
+})();
+</script>
+</body>
+</html>
