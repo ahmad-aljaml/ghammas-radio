@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة المراقبة المركزية | Ghammas Baladi Radio</title>
+<meta name="theme-color" content="#2b1d14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap wide">
+
+  <header>
+    <div class="brand">
+      <div class="logo">غ</div>
+      <div>
+        <h1>لوحة المراقبة المركزية</h1>
+        <small>GHAMMAS BALADI RADIO · OPERATIONS MONITOR</small>
+      </div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">جارِ التحميل…</span></div>
+  </header>
+
+  <!-- مؤشرات سريعة -->
+  <section class="kpis">
+    <div class="card kpi"><div class="label">الفروع المتصلة</div><div class="value" id="kBranches">—</div><div class="sub" id="kBranchesSub"></div></div>
+    <div class="card kpi"><div class="label">إجمالي الأجهزة المستمعة</div><div class="value" id="kDevices">—</div><div class="sub">على كل روابط البث</div></div>
+    <div class="card kpi"><div class="label">الفترة الحالية</div><div class="value" style="font-size:20px" id="kProgram">—</div><div class="sub" id="kProgramSub"></div></div>
+    <div class="card kpi"><div class="label">حالة السيرفر</div><div class="value" style="font-size:20px" id="kServer">—</div><div class="sub" id="kUpdated"></div></div>
+  </section>
+
+  <!-- الفروع -->
+  <section class="branches" id="branches"></section>
+
+  <section class="cols">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">
+          <h3 style="margin:0">يُبث الآن على كل الفروع</h3>
+          <button class="btn" id="monBtn" title="استماع للمراقبة على البث العام (ما بينحسب كفرع)">🔈 استماع للمراقبة</button>
+        </div>
+        <div class="np">
+          <div class="disc" aria-hidden="true"></div>
+          <div style="flex:1;min-width:0">
+            <div class="title" style="font-size:19px" id="title">—</div>
+            <div class="artist" id="artist"></div>
+            <div class="progress" style="margin-top:10px">
+              <div class="bar"><i id="barFill"></i></div>
+              <div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="src" id="nextLine"></div>
+      </div>
+      <div class="card">
+        <h3>سجل الأحداث (منذ فتح اللوحة)</h3>
+        <ul class="list" id="log"></ul>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <h3>جدول البث اليومي · بتوقيت عمّان</h3>
+        <ul class="periods" id="schedule"></ul>
+        <div class="src" id="schedSrc"></div>
+      </div>
+      <div class="card">
+        <h3>آخر ما تم بثّه</h3>
+        <ul class="list" id="history"></ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    لوحة مراقبة للقراءة فقط · البيانات حيّة من الـ API العام لـ AzuraCast (تحديث كل 10 ثوانٍ، وعدّاد المستمعين قد يتأخر حتى ~30 ثانية)<br>
+    إدارة المحتوى والجدولة تتم من <a id="adminLink" target="_blank" rel="noopener">لوحة إدارة AzuraCast</a> (محمية بكلمة سر) ·
+    <a href="index.html">مشغّل البث العام</a><br>
+    نموذج تقني من إعداد <b>أحمد الجمل</b> · أسماء الفروع للعرض التجريبي وقابلة للتعديل
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+<audio id="monAudio" preload="none"></audio>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+(() => {
+  const { C, fetchNowPlaying, fetchSchedule, renderSchedule, programLabel, programInfo, clock, fmt } = window.RadioCommon;
+  const $ = id => document.getElementById(id);
+  const nowClock = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: C.timezone });
+  const toast = m => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200); };
+
+  $("adminLink").href = C.base + "/login";
+  const playerUrl = id => new URL("index.html?branch=" + id, location.href).href;
+
+  // بطاقات الفروع (بتنبنى من ملف الإعدادات => إضافة فرع = سطر واحد بـ config.js)
+  $("branches").innerHTML = C.branches.map(b => `
+    <div class="card bcard" id="b-${b.id}">
+      <div class="bhead">
+        <div class="bname">${b.name}</div>
+        <div class="bstate"><span class="dot off" id="d-${b.id}"></span><span id="s-${b.id}">—</span></div>
+      </div>
+      <div class="bmeta"><span>الأجهزة: <b id="n-${b.id}">0</b></span><span style="direction:ltr">${b.mount}</span></div>
+      <div class="bactions">
+        <a class="btn" href="${playerUrl(b.id)}" target="_blank" rel="noopener">▶ افتح مشغّل الفرع</a>
+        <button class="btn" data-copy="${playerUrl(b.id)}">نسخ الرابط</button>
+      </div>
+    </div>`).join("");
+  document.querySelectorAll("[data-copy]").forEach(btn => btn.onclick = async () => {
+    try { await navigator.clipboard.writeText(btn.dataset.copy); toast("تم نسخ رابط الفرع ✓"); } catch (_) { prompt("انسخ الرابط:", btn.dataset.copy); }
+  });
+
+  const prev = {};
+  function log(text) {
+    const li = document.createElement("li");
+    li.innerHTML = "<span></span><span>" + nowClock() + "</span>";
+    li.firstChild.textContent = text;
+    $("log").prepend(li);
+    while ($("log").children.length > 12) $("log").lastChild.remove();
+  }
+  log("بدء المراقبة");
+
+  let np = null, npAt = 0, schedule = null;
+
+  async function refresh() {
+    try {
+      np = await fetchNowPlaying(); npAt = Date.now();
+      $("status").className = "status " + (np.is_online ? "live" : "bad");
+      $("statusText").textContent = np.is_online ? "البث يعمل" : "البث متوقف";
+      render();
+    } catch (e) {
+      $("status").className = "status bad"; $("statusText").textContent = "تعذّر الوصول للسيرفر";
+      $("kServer").textContent = "❌ غير متاح";
+    }
+  }
+
+  function render() {
+    const mounts = (np.station && np.station.mounts) || [];
+    const byPath = Object.fromEntries(mounts.map(m => [m.path, m]));
+    let online = 0;
+
+    C.branches.forEach(b => {
+      const m = byPath[b.mount];
+      const n = m && m.listeners ? (m.listeners.current ?? m.listeners.total ?? 0) : 0;
+      const on = n > 0;
+      if (on) online++;
+      $("n-" + b.id).textContent = n;
+      $("d-" + b.id).className = "dot " + (on ? "ok" : "off");
+      $("s-" + b.id).textContent = !m ? "رابط البث غير موجود" : (on ? "متصل" : "غير متصل");
+      $("b-" + b.id).classList.toggle("on", on);
+      if (prev[b.id] !== undefined && prev[b.id] !== on) log((on ? "✅ " : "⚠️ ") + b.name + (on ? " اتصل بالبث" : " انقطع عن البث"));
+      prev[b.id] = on;
+    });
+
+    $("kBranches").textContent = online + " / " + C.branches.length;
+    $("kBranchesSub").textContent = online === C.branches.length ? "كل الفروع متصلة" : (C.branches.length - online) + " فرع غير متصل";
+    $("kDevices").textContent = (np.listeners && (np.listeners.current ?? np.listeners.total)) ?? 0;
+
+    const cur = np.now_playing || {}, s = cur.song || {}, info = programInfo(cur.playlist);
+    $("kProgram").textContent = C.programs[cur.playlist] ? info.icon + " " + info.ar : C.fallbackProgram.icon + " " + C.fallbackProgram.ar;
+    $("kProgramSub").textContent = cur.playlist || "";
+    $("kServer").textContent = np.is_online ? "✅ يعمل" : "❌ متوقف";
+    $("kUpdated").textContent = "آخر تحديث " + nowClock();
+
+    $("title").textContent = s.title || s.text || "—";
+    $("artist").textContent = [s.artist, s.album].filter(Boolean).join(" · ");
+    const nx = (np.playing_next && np.playing_next.song) || {};
+    $("nextLine").textContent = "التالي: " + (nx.title || nx.text || "—") + (nx.artist ? " — " + nx.artist : "");
+
+    const ul = $("history"); ul.innerHTML = "";
+    (np.song_history || []).slice(0, 5).forEach(h => {
+      const li = document.createElement("li"); li.innerHTML = "<span></span><span>" + clock(h.played_at) + "</span>";
+      li.firstChild.textContent = (h.song && (h.song.title || h.song.text)) || "—"; ul.appendChild(li);
+    });
+    tick();
+  }
+
+  function tick() {
+    if (!np || !np.now_playing) return;
+    const c = np.now_playing, el = Math.min(c.duration || 0, (c.elapsed || 0) + (Date.now() - npAt) / 1000);
+    $("elapsed").textContent = fmt(el); $("duration").textContent = fmt(c.duration);
+    $("barFill").style.width = c.duration ? (el / c.duration * 100) + "%" : "0%";
+  }
+
+  async function loadSchedule() { schedule = await fetchSchedule(); drawSchedule(); }
+  function drawSchedule() {
+    if (!schedule) return;
+    renderSchedule($("schedule"), schedule.periods);
+    $("schedSrc").textContent = schedule.source === "server" ? "✓ مقروء مباشرة من نظام الإدارة" : "الجدول الافتراضي";
+  }
+
+  // استماع المدير للمراقبة: على البث العام (/radio.mp3) عشان ما ينحسب كأنه فرع
+  const mon = $("monAudio");
+  let monOn = false;
+  $("monBtn").onclick = () => {
+    monOn = !monOn;
+    if (monOn) {
+      mon.src = C.base + "/listen/" + C.station + C.defaultMount + "?t=" + Date.now();
+      mon.play().catch(() => { monOn = false; toast("تعذّر التشغيل"); updMon(); });
+    } else { mon.pause(); mon.removeAttribute("src"); mon.load(); }
+    updMon();
+  };
+  function updMon() { $("monBtn").textContent = monOn ? "🔇 إيقاف الاستماع" : "🔈 استماع للمراقبة"; }
+
+  document.querySelector(".np").classList.add("playing");
+  setInterval(tick, 1000);
+  setInterval(refresh, C.pollMs);
+  setInterval(drawSchedule, 30000);
+  setInterval(loadSchedule, 10 * 60000);
+  refresh(); loadSchedule();
+})();
+</script>
+</body>
+</html>
