@@ -8,6 +8,8 @@
 
 > Branch names are demo values and can be renamed in `config.js`.
 
+📄 **Documentation:** technical report (Arabic & English), decisions, challenges, AI usage log and evidence are in [`docs/`](docs/).
+
 A branded web player for a **centralized in-store radio system** that keeps all restaurant branches playing the same music at (almost) the same moment, managed from one place.
 Built as a technical prototype for the **CDR Group (Al Qubtan Restaurants – Ghammas Baladi)** practical assessment.
 
